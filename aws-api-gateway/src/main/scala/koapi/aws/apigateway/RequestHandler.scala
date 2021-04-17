@@ -24,7 +24,12 @@ class RequestHandler
       APIGatewayProxyResponseEvent
     ]
     with Logger {
-
+  
+  /** Pre response hook
+    * Will be executed right before returning the response. Can be used for executing actions before termination in serverless enviroments.
+    */
+  def preResponseHook: Unit = {}  
+      
   /** The Entrypoint for AWS Lambda
     * Returns an API Gateway representation of the result from handling the request
     *
@@ -76,9 +81,13 @@ class RequestHandler
 
     logger.debug(s"Responding to request with response $response")
 
-    new APIGatewayProxyResponseEvent()
+    val apiGatewayResponse = new APIGatewayProxyResponseEvent()
       .withBody(new String(response.written))
       .withStatusCode(response.status)
       .withHeaders(response.headers.asJava)
+    
+    preResponseHook()
+    
+    apiGatewayResponse
   }
 }
